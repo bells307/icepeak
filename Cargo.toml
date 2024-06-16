@@ -1,2 +1,5 @@
 [workspace]
 members = ["icepeak-db"]
+
+[workspace.dependencies]
+parking_lot = "0.12.3"
