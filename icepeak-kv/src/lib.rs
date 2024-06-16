@@ -8,16 +8,16 @@ use parking_lot::RwLock;
 use smol_str::SmolStr;
 use std::{collections::HashMap, num::NonZeroUsize};
 
-/// База данных - key/value хранилище
+/// Key/value хранилище
 ///
 /// Внутри себя имеет шарды - определенное количество экземпляров `HashMap`, обернутых в `RwLock` для
 /// синхронизации данных. Для каждого ключа с помощью хэша вычисляется индекс шарда.
-pub struct Database {
+pub struct KeyValueStorage {
     shards: Vec<Shard>,
     shift: usize,
 }
 
-impl Default for Database {
+impl Default for KeyValueStorage {
     fn default() -> Self {
         let shard_count =
             (std::thread::available_parallelism().map_or(1, usize::from) * 4).next_power_of_two();
@@ -28,7 +28,7 @@ impl Default for Database {
 
 type Shard = RwLock<HashMap<SmolStr, Data>>;
 
-impl Database {
+impl KeyValueStorage {
     pub fn new(shard_count: NonZeroUsize) -> Self {
         let shard_count = shard_count.get();
 
@@ -44,7 +44,7 @@ impl Database {
     }
 }
 
-impl Database {
+impl KeyValueStorage {
     /// Установка данных по указанному ключу. Если по такому ключу данные были ранее установлены,
     /// то они будут удалены и переданы в качестве возвращаемого значения метода.
     pub fn set(&self, key: SmolStr, data: Data) -> Option<Data> {

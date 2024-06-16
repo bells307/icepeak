@@ -1,5 +1,5 @@
 [package]
-name = "icepeak-db"
+name = "icepeak-kv"
 version = "0.1.0"
 edition = "2021"
 

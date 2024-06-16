@@ -1,12 +1,16 @@
 use parking_lot::RwLockReadGuard;
 use smol_str::SmolStr;
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, ops::Deref};
 
 pub struct Data(Vec<u8>);
 
 impl Data {
-    pub(crate) fn const_ptr(&self) -> *const [u8] {
+    pub fn const_ptr(&self) -> *const [u8] {
         self.0.as_ref() as *const _
+    }
+
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
     }
 }
 
