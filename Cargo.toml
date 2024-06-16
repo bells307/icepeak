@@ -2,4 +2,5 @@
 members = ["icepeak-db"]
 
 [workspace.dependencies]
+smol_str = "0.2.2"
 parking_lot = "0.12.3"

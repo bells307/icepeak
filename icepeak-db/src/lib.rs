@@ -1,16 +1,32 @@
-mod value;
+mod data;
 
+#[cfg(test)]
+mod tests;
+
+use data::{Data, DataPtr};
 use parking_lot::RwLock;
+use smol_str::SmolStr;
 use std::{collections::HashMap, num::NonZeroUsize};
-use value::{Value, ValuePtr};
 
-#[derive(Default)]
+/// База данных - key/value хранилище
+///
+/// Внутри себя имеет шарды - определенное количество экземпляров `HashMap`, обернутых в `RwLock` для
+/// синхронизации данных. Для каждого ключа с помощью хэша вычисляется индекс шарда.
 pub struct Database {
     shards: Vec<Shard>,
     shift: usize,
 }
 
-type Shard = RwLock<HashMap<String, Value>>;
+impl Default for Database {
+    fn default() -> Self {
+        let shard_count =
+            (std::thread::available_parallelism().map_or(1, usize::from) * 4).next_power_of_two();
+
+        Self::new(unsafe { NonZeroUsize::new_unchecked(shard_count) })
+    }
+}
+
+type Shard = RwLock<HashMap<SmolStr, Data>>;
 
 impl Database {
     pub fn new(shard_count: NonZeroUsize) -> Self {
@@ -29,21 +45,23 @@ impl Database {
 }
 
 impl Database {
-    pub fn set(&self, key: String, value: Value) -> Option<Value> {
-        self.get_shard(&key).write().insert(key, value)
+    /// Установка данных по указанному ключу. Если по такому ключу данные были ранее установлены,
+    /// то они будут удалены и переданы в качестве возвращаемого значения метода.
+    pub fn set(&self, key: SmolStr, data: Data) -> Option<Data> {
+        self.get_shard(&key).write().insert(key, data)
     }
 
-    pub fn get(&self, key: &str) -> Option<ValuePtr> {
+    pub fn get(&self, key: &str) -> Option<DataPtr> {
         // Берем лок шарда на чтение
         let guard = self.get_shard(key).read();
-        let val = (*guard).get(key)?;
+        let data = (*guard).get(key)?;
 
         // Помещаем guard в структуру, что будет гарантировать нам невозможность изменения
         // данных до уничтожения `ValuePtr`
-        Some(ValuePtr::new(val, guard))
+        Some(DataPtr::new(data.const_ptr(), guard))
     }
 
-    pub fn remove(&self, key: &str) -> Option<Value> {
+    pub fn remove(&self, key: &str) -> Option<Data> {
         self.get_shard(key).write().remove(key)
     }
 
