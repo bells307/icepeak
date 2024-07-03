@@ -1,6 +1,7 @@
 [workspace]
-members = ["icepeak-kv"]
+members = ["icepeak-kv", "icepeak-db"]
 
 [workspace.dependencies]
 smol_str = "0.2.2"
 parking_lot = "0.12.3"
+thiserror = "1.0.61"

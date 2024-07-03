@@ -1,0 +1,10 @@
+[package]
+name = "icepeak-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+icepeak-kv = { path = "../icepeak-kv/" }
+
+smol_str = { workspace = true }
+thiserror = { workspace = true }

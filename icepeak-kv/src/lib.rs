@@ -1,9 +1,11 @@
+pub use data::Data;
+
 mod data;
 
 #[cfg(test)]
 mod tests;
 
-use data::{Data, DataPtr};
+use data::DataPtr;
 use parking_lot::RwLock;
 use smol_str::SmolStr;
 use std::{collections::HashMap, num::NonZeroUsize};
@@ -61,10 +63,12 @@ impl KeyValueStorage {
         Some(DataPtr::new(data.const_ptr(), guard))
     }
 
+    /// Удалить значение из хранилища
     pub fn remove(&self, key: &str) -> Option<Data> {
         self.get_shard(key).write().remove(key)
     }
 
+    /// Получить шард по имени ключа
     fn get_shard(&self, key: &str) -> &Shard {
         let shard_idx = self.key_shard_idx(key);
 
@@ -73,6 +77,7 @@ impl KeyValueStorage {
             .unwrap_or_else(|| panic!("shard with index {shard_idx} does not exist"))
     }
 
+    /// Вычисление индекса шарда
     fn key_shard_idx(&self, value: &str) -> usize {
         let hash = key_hash(value);
         (hash << 7) >> self.shift
