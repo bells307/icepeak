@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func TestDatabaseGetSet(t *testing.T) {
-	db := DefaultDataStorage()
+	db := DefaultDataStorage(context.Background())
 	key := "key1"
 	value := 1
 
@@ -22,7 +23,7 @@ func TestDatabaseGetSet(t *testing.T) {
 }
 
 func TestDatabaseRemove(t *testing.T) {
-	db := DefaultDataStorage()
+	db := DefaultDataStorage(context.Background())
 	key := "key1"
 	value := 1
 
@@ -38,12 +39,12 @@ func TestDatabaseRemove(t *testing.T) {
 }
 
 func TestDatabaseExpires(t *testing.T) {
-	db := DefaultDataStorage()
+	db := DefaultDataStorage(context.Background())
 
 	key := "key1"
 	value := 1
 
-	expires := time.Second
+	expires := time.Millisecond * 100
 	db.Set(key, value, &expires)
 
 	gotValue := db.Get(key)

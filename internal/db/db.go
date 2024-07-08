@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"runtime"
 	"time"
 )
@@ -11,22 +12,22 @@ import (
 // мы всегда можем быстро вычислить, на каком шарде должно находиться значение,
 // соответствующее ключу
 type DataStorage struct {
-	shards []shard
+	shards []*shard
 }
 
 type Value interface{}
 
-func NewDataStorage(shard_count uint) DataStorage {
-	shards := make([]shard, shard_count)
+func NewDataStorage(ctx context.Context, shard_count uint) DataStorage {
+	shards := make([]*shard, shard_count)
 	for i := range shard_count {
-		shards[i] = newShard()
+		shards[i] = newShard(ctx)
 	}
 
 	return DataStorage{shards}
 }
 
-func DefaultDataStorage() DataStorage {
-	return NewDataStorage(uint(runtime.NumCPU()))
+func DefaultDataStorage(ctx context.Context) DataStorage {
+	return NewDataStorage(ctx, uint(runtime.NumCPU()))
 }
 
 // Получить значение по ключу
@@ -48,7 +49,7 @@ func (s *DataStorage) Remove(key string) {
 func (s *DataStorage) getShard(key string) *shard {
 	hash := djb2(key)
 	idx := hash % uint32(len(s.shards))
-	return &s.shards[idx]
+	return s.shards[idx]
 }
 
 // Вычисление хэша строки
