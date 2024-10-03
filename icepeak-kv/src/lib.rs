@@ -1,14 +1,19 @@
+use chrono::{DateTime, Utc};
 pub use data::Data;
 
 mod data;
+mod shard;
 
 #[cfg(test)]
 mod tests;
 
 use data::DataPtr;
-use parking_lot::RwLock;
+use shard::Shard;
 use smol_str::SmolStr;
-use std::{collections::HashMap, num::NonZeroUsize};
+use std::num::NonZeroUsize;
+use tokio_util::sync::CancellationToken;
+
+const DEFAULT_SHARD_COUNT: usize = 4;
 
 /// Key/value storage
 ///
@@ -18,25 +23,14 @@ pub struct KeyValueStorage {
     shards: Vec<Shard>,
 }
 
-impl Default for KeyValueStorage {
-    fn default() -> Self {
-        let shard_count =
-            (std::thread::available_parallelism().map_or(1, usize::from) * 4).next_power_of_two();
-
-        Self::new(unsafe { NonZeroUsize::new_unchecked(shard_count) })
-    }
-}
-
-type Shard = RwLock<HashMap<SmolStr, Data>>;
-
 impl KeyValueStorage {
-    pub fn new(shard_count: NonZeroUsize) -> Self {
+    pub fn new(ct: CancellationToken, shard_count: NonZeroUsize) -> Self {
         let shard_count = shard_count.get();
 
         let mut shards = Vec::with_capacity(shard_count);
 
         for _ in 0..shard_count {
-            shards.push(RwLock::new(HashMap::new()));
+            shards.push(Shard::new(ct.clone()));
         }
 
         Self { shards }
@@ -46,30 +40,23 @@ impl KeyValueStorage {
 impl KeyValueStorage {
     /// Set data for the specified key. If data was previously set for this key,
     /// it will be removed and returned as the method's return value.
-    pub fn set(&self, key: SmolStr, data: Data) -> Option<Data> {
-        self.get_shard(&key).write().insert(key, data)
+    pub fn set(&self, key: SmolStr, data: Data, expires: Option<DateTime<Utc>>) -> Option<Data> {
+        self.get_shard(&key).insert(key, data, expires)
     }
 
     /// Retrieve data by key
     pub fn get(&self, key: &str) -> Option<DataPtr> {
-        // Acquire read lock on the shard
-        let guard = self.get_shard(key).read();
-        let data = (*guard).get(key)?;
-
-        // Place the guard in the structure, which will ensure that the data cannot be modified
-        // until `ValuePtr` is destroyed
-        Some(DataPtr::new(data.const_ptr(), guard))
+        self.get_shard(key).get(key)
     }
 
     /// Remove the value from the storage
     pub fn remove(&self, key: &str) -> Option<Data> {
-        self.get_shard(key).write().remove(key)
+        self.get_shard(key).remove(key)
     }
 
     /// Get the shard by the key name
     fn get_shard(&self, key: &str) -> &Shard {
-        let hash = key_hash(key);
-        let shard_idx = hash % self.shards.len();
+        let shard_idx = key_hash(key) % self.shards.len();
 
         self.shards
             .get(shard_idx)

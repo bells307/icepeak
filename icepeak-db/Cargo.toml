@@ -8,3 +8,4 @@ icepeak-kv = { path = "../icepeak-kv/" }
 
 smol_str = { workspace = true }
 thiserror = { workspace = true }
+chrono = { workspace = true }

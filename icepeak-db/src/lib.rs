@@ -2,6 +2,7 @@ pub mod error;
 
 mod data_structures;
 
+use chrono::{DateTime, Utc};
 use data_structures::IntoData;
 use error::DbError;
 use icepeak_kv::{Data, KeyValueStorage};
@@ -17,8 +18,13 @@ impl Database {
     }
 
     /// Добавить значение в базу данных
-    pub fn insert(&self, key: SmolStr, data: impl IntoData) -> Result<Option<Data>, DbError> {
+    pub fn insert(
+        &self,
+        key: SmolStr,
+        data: impl IntoData,
+        expires: Option<DateTime<Utc>>,
+    ) -> Result<Option<Data>, DbError> {
         let data = data.into_data()?;
-        Ok(self.kv.set(key, data))
+        Ok(self.kv.set(key, data, expires))
     }
 }

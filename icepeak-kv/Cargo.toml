@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 parking_lot = { workspace = true }
 smol_str = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+chrono = { workspace = true }

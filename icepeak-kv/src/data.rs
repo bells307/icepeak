@@ -1,6 +1,6 @@
+use crate::shard::ShardMap;
 use parking_lot::RwLockReadGuard;
-use smol_str::SmolStr;
-use std::{collections::HashMap, ops::Deref};
+use std::ops::Deref;
 
 /// Data stored in the storage - stored as a set of bytes
 pub struct Data(Vec<u8>);
@@ -29,7 +29,7 @@ where
 }
 
 /// Guard object ensuring that data in the shard will not be modified while it exists
-type ShardReadGuard<'a> = RwLockReadGuard<'a, HashMap<SmolStr, Data>>;
+type ShardReadGuard<'a> = RwLockReadGuard<'a, ShardMap>;
 
 /// Pointer to data. Contains a guard to prevent data modification in the shard.
 ///

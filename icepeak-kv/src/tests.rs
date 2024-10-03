@@ -1,14 +1,18 @@
 use crate::KeyValueStorage;
 use std::ops::Deref;
+use tokio_util::sync::CancellationToken;
 
 #[test]
 fn kv_basics() {
-    let kv = KeyValueStorage::default();
+    let ct = CancellationToken::new();
+    let shard_count = std::thread::available_parallelism().unwrap_or(8.try_into().unwrap());
+
+    let kv = KeyValueStorage::new(ct, shard_count);
 
     let key = "key";
     let data = "123";
 
-    let prev_data = kv.set(key.into(), data.into());
+    let prev_data = kv.set(key.into(), data.into(), None);
     assert!(prev_data.is_none());
 
     let data_ptr = kv.get(key);
