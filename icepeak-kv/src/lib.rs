@@ -10,10 +10,10 @@ use parking_lot::RwLock;
 use smol_str::SmolStr;
 use std::{collections::HashMap, num::NonZeroUsize};
 
-/// Key/value хранилище
+/// Key/value storage
 ///
-/// Внутри себя имеет шарды - определенное количество экземпляров `HashMap`, обернутых в `RwLock` для
-/// синхронизации данных. Для каждого ключа с помощью хэша вычисляется индекс шарда.
+/// Internally contains shards - a certain number of instances of `HashMap` wrapped in `RwLock` for
+/// data synchronization. For each key, the shard index is calculated using the key's hash.
 pub struct KeyValueStorage {
     shards: Vec<Shard>,
 }
@@ -44,28 +44,29 @@ impl KeyValueStorage {
 }
 
 impl KeyValueStorage {
-    /// Установка данных по указанному ключу. Если по такому ключу данные были ранее установлены,
-    /// то они будут удалены и переданы в качестве возвращаемого значения метода.
+    /// Set data for the specified key. If data was previously set for this key,
+    /// it will be removed and returned as the method's return value.
     pub fn set(&self, key: SmolStr, data: Data) -> Option<Data> {
         self.get_shard(&key).write().insert(key, data)
     }
 
+    /// Retrieve data by key
     pub fn get(&self, key: &str) -> Option<DataPtr> {
-        // Берем лок шарда на чтение
+        // Acquire read lock on the shard
         let guard = self.get_shard(key).read();
         let data = (*guard).get(key)?;
 
-        // Помещаем guard в структуру, что будет гарантировать нам невозможность изменения
-        // данных до уничтожения `ValuePtr`
+        // Place the guard in the structure, which will ensure that the data cannot be modified
+        // until `ValuePtr` is destroyed
         Some(DataPtr::new(data.const_ptr(), guard))
     }
 
-    /// Удалить значение из хранилища
+    /// Remove the value from the storage
     pub fn remove(&self, key: &str) -> Option<Data> {
         self.get_shard(key).write().remove(key)
     }
 
-    /// Получить шард по имени ключа
+    /// Get the shard by the key name
     fn get_shard(&self, key: &str) -> &Shard {
         let hash = key_hash(key);
         let shard_idx = hash % self.shards.len();

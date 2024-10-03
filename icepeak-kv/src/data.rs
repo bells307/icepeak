@@ -2,6 +2,7 @@ use parking_lot::RwLockReadGuard;
 use smol_str::SmolStr;
 use std::{collections::HashMap, ops::Deref};
 
+/// Data stored in the storage - stored as a set of bytes
 pub struct Data(Vec<u8>);
 
 impl Data {
@@ -27,8 +28,12 @@ where
     }
 }
 
+/// Guard object ensuring that data in the shard will not be modified while it exists
 type ShardReadGuard<'a> = RwLockReadGuard<'a, HashMap<SmolStr, Data>>;
 
+/// Pointer to data. Contains a guard to prevent data modification in the shard.
+///
+/// **WARNING**: must be dropped after use, because while this object exists, the shard will remain locked.
 pub struct DataPtr<'a> {
     value: *const [u8],
     _guard: ShardReadGuard<'a>,
@@ -44,8 +49,8 @@ impl<'a> Deref for DataPtr<'a> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        // SAFETY: структура содержит guard на чтение из хешмапа, соответственно, никто не может
-        // менять в нем значения до момента уничтожения `ValuePtr`
+        // SAFETY: the structure contains a read guard on the hashmap, ensuring that no one can
+        // modify its values until `ValuePtr` is destroyed
         unsafe { &*self.value }
     }
 }

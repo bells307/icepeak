@@ -18,7 +18,7 @@ fn kv_basics() {
     let got_data = String::from_utf8_lossy(data_ptr.deref());
     assert_eq!(got_data, data);
 
-    // Уничтожаем `DataPtr`, иначе мы не сможем взять блокировку на изменение
+    // Destroy `DataPtr`, otherwise we won't be able to acquire the write lock
     drop(data_ptr);
 
     let removed_data = kv.remove(key);
