@@ -2,8 +2,8 @@ use crate::KeyValueStorage;
 use std::ops::Deref;
 use tokio_util::sync::CancellationToken;
 
-#[test]
-fn kv_basics() {
+#[tokio::test]
+async fn kv_basics() {
     let ct = CancellationToken::new();
     let shard_count = std::thread::available_parallelism().unwrap_or(8.try_into().unwrap());
 

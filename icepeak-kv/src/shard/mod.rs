@@ -1,23 +1,19 @@
 mod clean;
 mod value;
 
-use crate::{data::DataPtr, Data};
+use crate::{Data, GuardedDataPtr};
 use chrono::{DateTime, Utc};
 use clean::ShardCleaner;
 use parking_lot::RwLock;
 use smol_str::SmolStr;
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    mem,
-    sync::Arc,
-};
+use std::{collections::HashMap, mem, sync::Arc};
 use tokio_util::sync::CancellationToken;
 use value::ShardedValue;
 
 /// Hashmap with shard data
 pub type ShardMap = HashMap<SmolStr, ShardedValue>;
 
-/// Container of keys and values, protected with `RwLock`.
+/// Container of keys and values
 #[derive(Default, Clone)]
 pub struct Shard {
     /// Hashmap with data
@@ -61,7 +57,6 @@ impl Shard {
                 keys_lock.push(key.clone());
 
                 let idx = keys_lock.len() - 1;
-                drop(keys_lock);
 
                 let expires = expires.map(|dt| dt.timestamp_millis());
                 map_lock.insert(key, ShardedValue { data, idx, expires });
@@ -71,7 +66,7 @@ impl Shard {
         }
     }
 
-    pub fn get(&self, key: &str) -> Option<DataPtr> {
+    pub fn get(&self, key: &str) -> Option<GuardedDataPtr> {
         let lock = self.map.read();
 
         match lock.get(key) {
@@ -84,7 +79,7 @@ impl Shard {
                 } else {
                     // Place the guard in the structure, which will ensure that the data cannot be modified
                     // until `DataPtr` is destroyed
-                    Some(DataPtr::new(val.data.const_ptr(), lock))
+                    Some(GuardedDataPtr::new(val.data.const_ptr(), lock))
                 }
             }
             None => None,
@@ -93,11 +88,11 @@ impl Shard {
 
     /// Remove data from the shard
     pub fn remove(&self, key: &str) -> Option<Data> {
-        self.map.write().remove(key).map(|v| v.data)
-    }
+        let mut map_lock = self.map.write();
+        let mut keys_lock = self.keys.write();
 
-    /// Count the number of keys
-    fn count_keys(&self) -> usize {
-        self.keys.read().len()
+        let ShardedValue { data, idx, .. } = map_lock.remove(key)?;
+        keys_lock.remove(idx);
+        Some(data)
     }
 }

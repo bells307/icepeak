@@ -9,3 +9,4 @@ smol_str = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 chrono = { workspace = true }
+rand = { workspace = true }

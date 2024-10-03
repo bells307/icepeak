@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-pub use data::Data;
+
+pub use data::{ptr::GuardedDataPtr, Data};
 
 mod data;
 mod shard;
@@ -7,13 +8,10 @@ mod shard;
 #[cfg(test)]
 mod tests;
 
-use data::DataPtr;
 use shard::Shard;
 use smol_str::SmolStr;
 use std::num::NonZeroUsize;
 use tokio_util::sync::CancellationToken;
-
-const DEFAULT_SHARD_COUNT: usize = 4;
 
 /// Key/value storage
 ///
@@ -45,7 +43,7 @@ impl KeyValueStorage {
     }
 
     /// Retrieve data by key
-    pub fn get(&self, key: &str) -> Option<DataPtr> {
+    pub fn get(&self, key: &str) -> Option<GuardedDataPtr> {
         self.get_shard(key).get(key)
     }
 
