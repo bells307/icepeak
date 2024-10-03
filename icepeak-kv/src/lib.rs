@@ -16,7 +16,6 @@ use std::{collections::HashMap, num::NonZeroUsize};
 /// синхронизации данных. Для каждого ключа с помощью хэша вычисляется индекс шарда.
 pub struct KeyValueStorage {
     shards: Vec<Shard>,
-    shift: usize,
 }
 
 impl Default for KeyValueStorage {
@@ -40,9 +39,7 @@ impl KeyValueStorage {
             shards.push(RwLock::new(HashMap::new()));
         }
 
-        let shift = calc_shift(shard_count);
-
-        Self { shards, shift }
+        Self { shards }
     }
 }
 
@@ -70,17 +67,12 @@ impl KeyValueStorage {
 
     /// Получить шард по имени ключа
     fn get_shard(&self, key: &str) -> &Shard {
-        let shard_idx = self.key_shard_idx(key);
+        let hash = key_hash(key);
+        let shard_idx = hash % self.shards.len();
 
         self.shards
             .get(shard_idx)
             .unwrap_or_else(|| panic!("shard with index {shard_idx} does not exist"))
-    }
-
-    /// Вычисление индекса шарда
-    fn key_shard_idx(&self, value: &str) -> usize {
-        let hash = key_hash(value);
-        (hash << 7) >> self.shift
     }
 }
 
@@ -95,8 +87,4 @@ fn key_hash(input: &str) -> usize {
     }
 
     r
-}
-
-fn calc_shift(shard_count: usize) -> usize {
-    (std::mem::size_of::<usize>() * 8) - (shard_count.trailing_zeros() as usize)
 }
