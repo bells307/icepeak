@@ -1,13 +1,13 @@
-use bytes::Bytes;
+use std::sync::Arc;
 
 pub(crate) mod ptr;
 
 /// Data stored in the storage - stored as a set of bytes
 #[derive(Clone)]
-pub struct Data(Bytes);
+pub struct Data(Arc<[u8]>);
 
 impl Data {
-    pub fn new(bytes: Bytes) -> Self {
+    pub fn new(bytes: Arc<[u8]>) -> Self {
         Self(bytes)
     }
 
@@ -18,7 +18,7 @@ impl Data {
 
 impl<T> From<T> for Data
 where
-    T: Into<Bytes>,
+    T: Into<Arc<[u8]>>,
 {
     fn from(value: T) -> Self {
         Self(value.into())

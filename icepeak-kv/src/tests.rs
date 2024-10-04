@@ -10,7 +10,7 @@ async fn kv_basics() {
     let key = "key";
     let data = "123";
 
-    let prev_data = kv.set(key.into(), data.into(), None);
+    let prev_data = kv.set(key.into(), data.as_bytes().into(), None);
     assert!(prev_data.is_none());
 
     let data_ptr = kv.get(key);
@@ -40,7 +40,7 @@ async fn key_expires() {
     let data = "123";
 
     let expires = Utc::now() + chrono::Duration::seconds(1);
-    let prev_data = kv.set(key.into(), data.into(), Some(expires));
+    let prev_data = kv.set(key.into(), data.as_bytes().into(), Some(expires));
     assert!(prev_data.is_none());
 
     let data_ptr = kv.get(key);
