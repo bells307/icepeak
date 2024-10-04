@@ -1,15 +1,14 @@
+use bytes::Bytes;
+
 pub(crate) mod ptr;
 
 /// Data stored in the storage - stored as a set of bytes
-pub struct Data(Vec<u8>);
+#[derive(Clone)]
+pub struct Data(Bytes);
 
 impl Data {
-    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+    pub fn new(bytes: Bytes) -> Self {
         Self(bytes)
-    }
-
-    pub fn const_ptr(&self) -> *const [u8] {
-        self.0.as_ref() as *const _
     }
 
     pub fn as_slice(&self) -> &[u8] {
@@ -19,7 +18,7 @@ impl Data {
 
 impl<T> From<T> for Data
 where
-    T: Into<Vec<u8>>,
+    T: Into<Bytes>,
 {
     fn from(value: T) -> Self {
         Self(value.into())

@@ -92,7 +92,7 @@ impl Shard {
                 } else {
                     // Place the guard in the structure, which will ensure that the data cannot be modified
                     // until `DataPtr` is destroyed
-                    Some(GuardedDataPtr::new(val.data.const_ptr(), lock))
+                    Some(GuardedDataPtr::new(val.data.clone(), lock))
                 }
             }
             None => None,

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bytes = { workspace = true }
 parking_lot = { workspace = true }
 smol_str = { workspace = true }
 tokio = { workspace = true }

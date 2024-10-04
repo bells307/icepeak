@@ -1,4 +1,4 @@
-use crate::shard::ShardInner;
+use crate::{shard::ShardInner, Data};
 use parking_lot::RwLockReadGuard;
 use std::ops::Deref;
 
@@ -9,14 +9,14 @@ type ShardReadGuard<'a> = RwLockReadGuard<'a, ShardInner>;
 ///
 /// **WARNING**: must be dropped after use, because while this object exists, the shard will remain locked.
 pub struct GuardedDataPtr<'a> {
-    value: *const [u8],
+    data: Data,
     _guard: ShardReadGuard<'a>,
 }
 
 impl<'a> GuardedDataPtr<'a> {
-    pub fn new(value: *const [u8], guard: ShardReadGuard<'a>) -> Self {
+    pub fn new(data: Data, guard: ShardReadGuard<'a>) -> Self {
         Self {
-            value,
+            data,
             _guard: guard,
         }
     }
@@ -26,8 +26,6 @@ impl<'a> Deref for GuardedDataPtr<'a> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        // SAFETY: the structure contains a read guard on the hashmap, ensuring that no one can
-        // modify its values until `ValuePtr` is destroyed
-        unsafe { &*self.value }
+        self.data.0.deref()
     }
 }
