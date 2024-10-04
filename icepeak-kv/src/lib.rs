@@ -22,16 +22,23 @@ pub struct KeyValueStorage {
 }
 
 impl KeyValueStorage {
-    pub fn new(ct: CancellationToken, shard_count: NonZeroUsize) -> Self {
+    pub fn new(shard_count: NonZeroUsize) -> Self {
         let shard_count = shard_count.get();
 
         let mut shards = Vec::with_capacity(shard_count);
 
         for _ in 0..shard_count {
-            shards.push(Shard::new(ct.clone()));
+            shards.push(Shard::new());
         }
 
         Self { shards }
+    }
+
+    /// Start shard cleaning
+    pub fn run_active_cleaner(&self, ct: CancellationToken) {
+        self.shards
+            .iter()
+            .for_each(|s| s.run_active_cleaner(ct.clone()))
     }
 }
 

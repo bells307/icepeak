@@ -1,9 +1,9 @@
-use crate::shard::ShardMap;
+use crate::shard::ShardInner;
 use parking_lot::RwLockReadGuard;
 use std::ops::Deref;
 
 /// Guard object ensuring that data in the shard will not be modified while it exists
-type ShardReadGuard<'a> = RwLockReadGuard<'a, ShardMap>;
+type ShardReadGuard<'a> = RwLockReadGuard<'a, ShardInner>;
 
 /// Pointer to data. Contains a guard to prevent data modification in the shard.
 ///

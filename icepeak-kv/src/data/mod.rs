@@ -1,9 +1,5 @@
 pub(crate) mod ptr;
 
-use crate::shard::ShardMap;
-use parking_lot::RwLockReadGuard;
-use std::ops::Deref;
-
 /// Data stored in the storage - stored as a set of bytes
 pub struct Data(Vec<u8>);
 
