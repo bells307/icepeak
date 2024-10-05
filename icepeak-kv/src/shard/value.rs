@@ -1,10 +1,10 @@
-use crate::Data;
+use crate::DataBytes;
 use chrono::Utc;
 
 /// Value in the hashmap with data
 pub struct ShardedValue {
     /// The actual data
-    pub(super) data: Data,
+    pub(super) data: DataBytes,
     /// Index of the key in the keys array
     pub(super) idx: usize,
     /// Time when the value expires (ms)

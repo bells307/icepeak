@@ -1,7 +1,7 @@
 mod clean;
 mod value;
 
-use crate::{data::DataTrait, Data, GuardedDataPtr};
+use crate::{data::Data, DataBytes, GuardedDataPtr};
 use chrono::{DateTime, Utc};
 use clean::ShardActiveCleaner;
 use parking_lot::RwLock;
@@ -47,9 +47,9 @@ impl Shard {
     pub fn insert(
         &self,
         key: SmolStr,
-        mut data: Data,
+        mut data: DataBytes,
         expires: Option<DateTime<Utc>>,
-    ) -> Option<Data> {
+    ) -> Option<DataBytes> {
         let mut lock = self.inner.write();
 
         match lock.map.get_mut(&key) {
@@ -81,7 +81,7 @@ impl Shard {
     /// Retrieve data by key
     pub fn get<T>(&self, key: &str) -> Result<Option<GuardedDataPtr<T>>, T::Error>
     where
-        T: DataTrait,
+        T: Data,
     {
         let lock = self.inner.read();
 

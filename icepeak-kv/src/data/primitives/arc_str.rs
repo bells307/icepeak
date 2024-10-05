@@ -1,6 +1,5 @@
+use crate::{data::Data, DataBytes};
 use std::{str::Utf8Error, sync::Arc};
-
-use crate::{data::DataTrait, Data};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ArcString(Arc<str>);
@@ -17,14 +16,14 @@ impl From<&str> for ArcString {
     }
 }
 
-impl DataTrait for ArcString {
+impl Data for ArcString {
     type Error = Utf8Error;
 
-    fn into_data(self) -> Data {
+    fn into_data(self) -> DataBytes {
         self.0.into()
     }
 
-    fn from_data(data: Data) -> Result<Self, Self::Error> {
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(data.as_slice())?;
         Ok(Self::from(s))
     }

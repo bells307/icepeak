@@ -1,141 +1,211 @@
 pub(crate) mod arc_str;
 
-use super::DataTrait;
-use crate::Data;
-use std::{convert::Infallible, sync::Arc};
+use super::Data;
+use crate::DataBytes;
+use std::{mem, sync::Arc};
 
-// impl DataTrait for String {
-//     type Error = FromUtf8Error;
-//
-//     fn into_data(self) -> Data {
-//         Data::new(self.as_bytes().into())
-//     }
-//
-//     fn from_data(data: Data) -> Result<Self, Self::Error> {
-//         String::from_utf8(data.into())
-//     }
-// }
-//
-// impl DataTrait for Vec<u8> {
-//     type Error = Infallible;
-//
-//     fn into_data(self) -> Data {
-//         Data::new(self)
-//     }
-//
-//     fn from_data(data: Data) -> Result<Self, Self::Error> {
-//         Ok(data.into_vec())
-//     }
-// }
+#[derive(Debug, thiserror::Error)]
+pub enum PrimitiveCastError {
+    #[error("not enough bytes in data, expected: {0}")]
+    NotEnoughData(usize),
+}
 
-impl DataTrait for i8 {
-    type Error = Infallible;
+impl Data for i8 {
+    type Error = PrimitiveCastError;
 
-    fn into_data(self) -> Data {
+    fn into_data(self) -> DataBytes {
         let bytes = self.to_be_bytes();
-        Data::new(Arc::new(bytes))
+        DataBytes::new(Arc::new(bytes))
     }
 
-    fn from_data(data: Data) -> Result<Self, Self::Error> {
-        Ok(i8::from_be_bytes([data.0[0]]))
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| Self::from_be_bytes([slice[0]]))
     }
 }
 
-//
-// impl IntoData for i16 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for i32 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for i64 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for i128 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for isize {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for u8 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for u16 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for u32 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for u64 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for u128 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for usize {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for f32 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for f64 {
-//     fn into_data(self) -> Data {
-//         let bytes = self.to_be_bytes();
-//         Data::new(Arc::new(bytes))
-//     }
-// }
-//
-// impl IntoData for bool {
-//     fn into_data(self) -> Data {
-//         let bytes = [self as u8];
-//         Data::new(Arc::new(bytes))
-//     }
-// }
+impl Data for i16 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| Self::from_be_bytes([slice[0], slice[1]]))
+    }
+}
+
+impl Data for i32 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([slice[0], slice[1], slice[2], slice[3]])
+        })
+    }
+}
+
+impl Data for i64 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+            ])
+        })
+    }
+}
+
+impl Data for i128 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+                slice[8], slice[9], slice[10], slice[11], slice[12], slice[13], slice[14],
+                slice[15],
+            ])
+        })
+    }
+}
+
+impl Data for isize {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+            ])
+        })
+    }
+}
+
+impl Data for u8 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| Self::from_be_bytes([slice[0]]))
+    }
+}
+
+impl Data for u16 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| Self::from_be_bytes([slice[0], slice[1]]))
+    }
+}
+
+impl Data for u32 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([slice[0], slice[1], slice[2], slice[3]])
+        })
+    }
+}
+
+impl Data for u64 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+            ])
+        })
+    }
+}
+
+impl Data for u128 {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+                slice[8], slice[9], slice[10], slice[11], slice[12], slice[13], slice[14],
+                slice[15],
+            ])
+        })
+    }
+}
+
+impl Data for usize {
+    type Error = PrimitiveCastError;
+
+    fn into_data(self) -> DataBytes {
+        let bytes = self.to_be_bytes();
+        DataBytes::new(Arc::new(bytes))
+    }
+
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error> {
+        integer_cast(data, |slice| {
+            Self::from_be_bytes([
+                slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+            ])
+        })
+    }
+}
+
+#[inline(always)]
+fn integer_cast<T>(data: DataBytes, f: impl Fn(&[u8]) -> T) -> Result<T, PrimitiveCastError> {
+    let slice = data.as_slice();
+    let exp = mem::size_of::<T>();
+
+    if slice.len() < exp {
+        Err(PrimitiveCastError::NotEnoughData(exp))
+    } else {
+        Ok(f(slice))
+    }
+}

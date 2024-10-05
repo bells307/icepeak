@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 
-use data::DataTrait;
-pub use data::{ptr::GuardedDataPtr, Data};
+use data::Data;
+pub use data::{ptr::GuardedDataPtr, DataBytes};
 
 mod data;
 mod shard;
@@ -49,16 +49,16 @@ impl KeyValueStorage {
     pub fn set(
         &self,
         key: SmolStr,
-        data: impl DataTrait,
+        data: impl Data,
         expires: Option<DateTime<Utc>>,
-    ) -> Option<Data> {
+    ) -> Option<DataBytes> {
         self.get_shard(&key).insert(key, data.into_data(), expires)
     }
 
     /// Retrieve data by key
     pub fn get<T>(&self, key: &str) -> Result<Option<GuardedDataPtr<T>>, T::Error>
     where
-        T: DataTrait,
+        T: Data,
     {
         self.get_shard(key).get(key)
     }

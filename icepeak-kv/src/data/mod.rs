@@ -5,17 +5,17 @@ pub(crate) mod ptr;
 
 /// Data stored in the storage - stored as a set of bytes
 #[derive(Clone)]
-pub struct Data(Arc<[u8]>);
+pub struct DataBytes(Arc<[u8]>);
 
 /// Ability to convert a data type into the internal data representation in the storage
-pub trait DataTrait: Sized {
+pub trait Data: Sized {
     type Error: std::error::Error;
 
-    fn into_data(self) -> Data;
-    fn from_data(data: Data) -> Result<Self, Self::Error>;
+    fn into_data(self) -> DataBytes;
+    fn from_data(data: DataBytes) -> Result<Self, Self::Error>;
 }
 
-impl Data {
+impl DataBytes {
     pub fn new(bytes: Arc<[u8]>) -> Self {
         Self(bytes)
     }
@@ -25,7 +25,7 @@ impl Data {
     }
 }
 
-impl<T> From<T> for Data
+impl<T> From<T> for DataBytes
 where
     T: Into<Arc<[u8]>>,
 {

@@ -1,4 +1,4 @@
-use super::DataTrait;
+use super::Data;
 use crate::shard::ShardInner;
 use parking_lot::RwLockReadGuard;
 use std::ops::Deref;
@@ -16,7 +16,7 @@ pub struct GuardedDataPtr<'a, T> {
 
 impl<'a, T> GuardedDataPtr<'a, T>
 where
-    T: DataTrait,
+    T: Data,
 {
     pub fn new(data: T, guard: ShardReadGuard<'a>) -> Self {
         Self {
@@ -28,7 +28,7 @@ where
 
 impl<'a, T> Deref for GuardedDataPtr<'a, T>
 where
-    T: DataTrait,
+    T: Data,
 {
     type Target = T;
 
