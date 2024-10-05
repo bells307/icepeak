@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 
+use data::DataTrait;
 pub use data::{ptr::GuardedDataPtr, Data};
 
 mod data;
@@ -45,18 +46,26 @@ impl KeyValueStorage {
 impl KeyValueStorage {
     /// Set data for the specified key. If data was previously set for this key,
     /// it will be removed and returned as the method's return value.
-    pub fn set(&self, key: SmolStr, data: Data, expires: Option<DateTime<Utc>>) -> Option<Data> {
-        self.get_shard(&key).insert(key, data, expires)
+    pub fn set(
+        &self,
+        key: SmolStr,
+        data: impl DataTrait,
+        expires: Option<DateTime<Utc>>,
+    ) -> Option<Data> {
+        self.get_shard(&key).insert(key, data.into_data(), expires)
     }
 
     /// Retrieve data by key
-    pub fn get(&self, key: &str) -> Option<GuardedDataPtr> {
+    pub fn get<T>(&self, key: &str) -> Result<Option<GuardedDataPtr<T>>, T::Error>
+    where
+        T: DataTrait,
+    {
         self.get_shard(key).get(key)
     }
 
     /// Remove the value from the storage
-    pub fn remove(&self, key: &str) -> Option<Data> {
-        self.get_shard(key).remove(key)
+    pub fn remove(&self, key: &str) {
+        self.get_shard(key).remove(key);
     }
 
     /// Get the shard by the key name

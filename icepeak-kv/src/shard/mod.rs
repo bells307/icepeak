@@ -1,7 +1,7 @@
 mod clean;
 mod value;
 
-use crate::{Data, GuardedDataPtr};
+use crate::{data::DataTrait, Data, GuardedDataPtr};
 use chrono::{DateTime, Utc};
 use clean::ShardActiveCleaner;
 use parking_lot::RwLock;
@@ -79,7 +79,10 @@ impl Shard {
     }
 
     /// Retrieve data by key
-    pub fn get(&self, key: &str) -> Option<GuardedDataPtr> {
+    pub fn get<T>(&self, key: &str) -> Result<Option<GuardedDataPtr<T>>, T::Error>
+    where
+        T: DataTrait,
+    {
         let lock = self.inner.read();
 
         match lock.map.get(key) {
@@ -88,23 +91,24 @@ impl Shard {
                 if val.expired() {
                     drop(lock);
                     self.inner.write().map.remove(key);
-                    None
+                    Ok(None)
                 } else {
                     // Place the guard in the structure, which will ensure that the data cannot be modified
                     // until `DataPtr` is destroyed
-                    Some(GuardedDataPtr::new(val.data.clone(), lock))
+                    let data = T::from_data(val.data.clone())?;
+                    Ok(Some(GuardedDataPtr::new(data, lock)))
                 }
             }
-            None => None,
+            None => Ok(None),
         }
     }
 
     /// Remove data from the shard
-    pub fn remove(&self, key: &str) -> Option<Data> {
+    pub fn remove(&self, key: &str) {
         let mut lock = self.inner.write();
 
-        let ShardedValue { data, idx, .. } = lock.map.remove(key)?;
-        lock.keys.remove(idx);
-        Some(data)
+        if let Some(ShardedValue { idx, .. }) = lock.map.remove(key) {
+            lock.keys.remove(idx);
+        }
     }
 }
